@@ -159,9 +159,9 @@ func (d *decodeState) unmarshal(v *Torrent) (err error) {
 
 	mapToInfo(dict["info"], &v.info)
 
-	if list, ok := dict["announce-list"].([][][]byte); ok {
+	if outer, ok := dict["announce-outer"].([][][]byte); ok {
 		var l []string
-		for _, inner := range list {
+		for _, inner := range outer {
 			for _, b := range inner {
 				l = append(l, string(b))
 			}
