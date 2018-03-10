@@ -4,7 +4,6 @@ import (
 	"unicode"
 	"strconv"
 	"strings"
-	"reflect"
 )
 
 type File struct {
@@ -26,24 +25,15 @@ type Torrent struct {
 	info         Info
 }
 
-
-func Unmarshal(data []byte, v *Torrent) error {
+func Unmarshal(data []byte, v *Torrent) {
 	var d decodeState
 	d.init(data)
-	return d.unmarshal(v)
+	d.unmarshal(v)
 }
 
 type decodeState struct {
 	data []byte
-	off  int // read offset in data
-	errorContext struct {
-		// provides context for type errors
-		Struct string
-		Field  string
-	}
-	savedError            error
-	useNumber             bool
-	disallowUnknownFields bool
+	off  int
 }
 
 func (d *decodeState) current() rune {
@@ -53,45 +43,16 @@ func (d *decodeState) current() rune {
 func (d *decodeState) init(data []byte) *decodeState {
 	d.data = data
 	d.off = 0
-	d.savedError = nil
-	d.errorContext.Struct = ""
-	d.errorContext.Field = ""
 	return d
 }
 
-type InvalidUnmarshalError struct {
-	Type reflect.Type
-}
-
-func (e *InvalidUnmarshalError) Error() string {
-	if e.Type == nil {
-		return "json: Unmarshal(nil)"
-	}
-
-	if e.Type.Kind() != reflect.Ptr {
-		return "json: Unmarshal(non-pointer " + e.Type.String() + ")"
-	}
-	return "json: Unmarshal(nil " + e.Type.String() + ")"
-}
-
-func verifyStartOfDictionary(d *decodeState) {
-	if d.current() != 'd' {
-		// FIXME: Throw an error! This isn't a bencoded dictionary
-	}
-	d.off++ //consume the d that starts the dictionary
-}
-
-func endOfDictionary(d *decodeState) bool {
-	return d.current() == 'e'
-}
-
 func (d *decodeState) unmarshalDictionary() map[string]interface{} {
-	verifyStartOfDictionary(d)
+	d.off++
 
 	m := make(map[string]interface{})
 
 	for d.off < len(d.data) {
-		if endOfDictionary(d) {
+		if d.current() == 'e' {
 			d.off++
 			return m // Done decoding the dictionary
 		}
@@ -113,24 +74,13 @@ func (d *decodeState) unmarshalDictionary() map[string]interface{} {
 	return m
 }
 
-func verifyStartOfList(d *decodeState) {
-	if d.current() != 'l' {
-		// FIXME: Throw an error! This isn't a bencoded dictionary
-	}
-	d.off++ //consume the d that starts the dictionary
-}
-
-func endOfList(d *decodeState) bool {
-	return d.current() == 'e'
-}
-
 func (d *decodeState) unmarshalList() []interface{} {
-	verifyStartOfList(d)
+	d.off++
 
 	var a []interface{}
 
 	for d.off < len(d.data) {
-		if endOfList(d) {
+		if d.current() == 'e' {
 			d.off++
 			return a // Done decoding the dictionary
 		}
@@ -181,7 +131,6 @@ func (d *decodeState) unmarshalInteger() int {
 }
 
 func mapToInfo(m interface{}, i *Info) {
-
 	if m, ok := m.(map[string]interface{}); ok {
 		if v, ok := m["length"].(int); ok {
 			i.length = v
