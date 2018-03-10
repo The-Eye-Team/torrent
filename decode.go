@@ -7,22 +7,22 @@ import (
 )
 
 type File struct {
-	length int
-	path   string
+	Length int
+	Path   string
 }
 
 type Info struct {
-	files       []File
-	length      int
-	name        string
-	pieceLength int
-	pieces      []byte
+	Files       []File
+	Length      int
+	Name        string
+	PieceLength int
+	Pieces      []byte
 }
 
 type Torrent struct {
-	announce     string
-	announceList []string
-	info         Info
+	Announce     string
+	AnnounceList []string
+	Info         Info
 }
 
 func Unmarshal(data []byte, v *Torrent) {
@@ -132,20 +132,20 @@ func (d *decodeState) unmarshalInteger() int {
 
 func mapToInfo(m interface{}, i *Info) {
 	if m, ok := m.(map[string]interface{}); ok {
-		if v, ok := m["length"].(int); ok {
-			i.length = v
+		if v, ok := m["Length"].(int); ok {
+			i.Length = v
 		}
 
-		if v, ok := m["name"].([]byte); ok {
-			i.name = string(v)
+		if v, ok := m["Name"].([]byte); ok {
+			i.Name = string(v)
 		}
 
-		if v, ok := m["piece length"].(int); ok {
-			i.pieceLength = v
+		if v, ok := m["piece Length"].(int); ok {
+			i.PieceLength = v
 		}
 
-		if v, ok := m["pieces"].([]byte); ok {
-			i.pieces = v
+		if v, ok := m["Pieces"].([]byte); ok {
+			i.Pieces = v
 		}
 	}
 }
@@ -153,13 +153,13 @@ func mapToInfo(m interface{}, i *Info) {
 func (d *decodeState) unmarshal(v *Torrent) (err error) {
 	dict := d.unmarshalDictionary()
 
-	if str, ok := dict["announce"].([]byte); ok {
-		v.announce = string(str)
+	if str, ok := dict["Announce"].([]byte); ok {
+		v.Announce = string(str)
 	}
 
-	mapToInfo(dict["info"], &v.info)
+	mapToInfo(dict["Info"], &v.Info)
 
-	if outer, ok := dict["announce-outer"].([][][]byte); ok {
+	if outer, ok := dict["Announce-outer"].([][][]byte); ok {
 		var l []string
 		for _, inner := range outer {
 			for _, b := range inner {
